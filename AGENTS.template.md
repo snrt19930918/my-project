@@ -1,58 +1,57 @@
 {{PROJECT_INFO_SECTION}}
 
-# Agents 工作流程说明
+# Agent 工作流程
 
-## 🧭 工作流程
+## 核心流程
 
-| 步骤 | 说明 | 参考文档 |
-|------|------|----------|
-| ① 读取上下文 | 系统规则、用户资料、相关规范、已有原型与资源目录 | — |
-| ② 产品需求对齐 | 新建原型、明显重构或需求模糊时，先收敛目标用户、核心任务、范围、功能清单、内容来源和验收重点 | `rules/requirements-alignment-guide.md` |
-| ③ 设计方案对齐 | 产品需求确认后，先让用户从 3-4 个匹配的 `DESIGN.md` 候选中确认设计基底，再把布局、交互、视觉和内容呈现收敛为设计决策 | `rules/requirements-alignment-guide.md` |
-| ④ 原型开发与验收 | 根据已确认方案实现原型；遇到问题按错误信息定位修复，并完成预览验收 | `rules/prototype-development-guide.md` |
-
-## 额外产物
-
-| 产物/场景 | 位置 | 参考文档 |
-|-----------|------|----------|
-| 主题 | `src/themes/<theme-key>/` | `rules/theme-guide.md` |
-| 项目资料和文档 | `src/resources/` | `rules/resource-management-guide.md` |
-| UI Review 结论 | `src/prototypes/<prototype-name>/.spec/ui-review.md` | `rules/ui-review-guide.md` |
-| 原型 Review 结论 | `src/prototypes/<prototype-name>/.spec/prototype-review.md` | `rules/prototype-review-guide.md` |
-
-## ⚠️ 重要原则
-
-1. **产品需求和设计方案分阶段对齐**
-   - 先确认做什么，再确认怎么表达；读取资料、规格/计划确认和开发验收过程中，发现影响方向的问题都要回到相应阶段继续对齐
-
-   | 阶段 | 需要对齐的情况 |
-   |------|----------------|
-   | 读取资料 | 目标、边界、素材、参考或约束不清 |
-   | 产品需求 | 出现不同目标用户、功能范围、内容来源或验收标准 |
-   | 设计方案 | 出现不同信息架构、交互路径、视觉方向或设计基底 |
-   | 开发验收 | 实现结果、体验取舍或验收标准发生变化 |
-
-2. **优先创建和维护 task/todo**
-   - 多步骤、高风险、需求对齐、方案确认或跨文件任务，优先用 task/todo 记录当前步骤、状态和下一步
-   - 简单局部修改可以保持轻量，但要清楚说明当前正在处理什么、完成后如何验收
-3. **设计要判断何时收敛、何时发散**
-   - AI 应自行判断当前需要收拢需求还是探索解法：需求不清先收敛；需要改善体验或创新表达时再发散。发散是为了帮助用户选择最终方向
-4. **不要把截图当唯一真相**
-   - 截图用于视觉参考；有代码、组件、设计系统、业务资料或用户说明时，要结合上下文判断
-5. **早展示，早反馈**
-   - 产品需求、设计方案或原型应尽早交给用户确认，不要等到全部完成后才暴露方向问题
-6. **讲人话，用户不懂技术**
-   - 用用户能理解的方式说明取舍、风险和结果；用户无法执行 CLI 命令，不得省略验收流程
-   - 向用户请求反馈或验收时，提醒用户尽量提供截图、预览链接、页面路径或具体问题位置，便于准确定位和复现
-
-## 项目结构
+新建或明显更新原型时，按以下顺序推进：
 
 ```text
-├── src/
-│   ├── common/      # 公共运行时、类型和工具
-│   ├── prototypes/  # 原型页面目录
-│   ├── resources/   # 项目资料、文档和素材
-│   └── themes/      # 主题与设计规范
-├── rules/           # Agent 工作规则
-└── .axhub/make/     # 本地运行数据和项目 metadata
+读取上下文 -> 产品需求对齐 -> DESIGN.md 候选与设计方向对齐 -> 创建/更新主规格草案 -> 围绕主规格多轮评审与确认 -> 实现 -> 同步主规格 -> 提供预览链接 -> 验收
 ```
+
+- 主规格不是空白起点；需求与设计完成第一轮对齐后，才创建或更新主规格草案。
+- 实现前必须围绕主规格完成需求、设计和实施边界确认；实现后同步主规格，再进入验收。
+- 局部文案、样式、素材替换和明确的 bug 修复，可以跳过正式对齐与主规格确认；如果改动改变了原型事实，仍需同步主规格。
+- 如果目标、范围、内容来源、验收重点、信息架构、交互路径、视觉方向或设计基底存在会改变产出方向的多种选择，停在对应阶段与用户确认。
+- 详细对齐方法见 `rules/requirements-alignment-guide.md`。
+- 原型主规格、确认门槛和双向同步统一遵循该指南的“原型主规格”。
+- 选择设计基底时，先检查当前项目本地候选（项目默认主题、已有同类原型和 `src/themes/`）；本地不足 3 个时，再使用 `$search-design-system` 从 Design Knowledge 主题库补足。只有用户明确要求创建或修改主题时才使用 `$build-design-system`。
+
+验收后由用户按需发起的可选阶段：
+
+```text
+Review（可选） -> 标注（可选） -> 发布（可选）
+```
+
+- 三个阶段均为可选，可按任务需要独立进入；进入后遵循对应规则。
+- Review 发现问题时，回到主规格、实现和验收阶段完成修复闭环。
+- 原型标注使用 `$prototype-annotation`。
+- Commentary 批注处理使用 `$handle-comments`，不属于原型标注阶段。
+
+## 工作原则
+
+1. **原型按生产级界面处理**
+   - 本项目中的「原型」默认是可运行、接近正式产品的前端页面，不是黑白灰线框图或低保真草稿；只有用户明确要求时才使用低保真、wireframe、placeholder 等表达。
+2. **先读上下文，再做判断**
+   - 优先结合用户说明、项目资料、现有代码、组件和设计系统判断；截图只作为视觉参考，不是唯一依据。
+3. **图片素材与生成**
+   - 适当使用项目已有素材、AI 生成图或可合法使用的第三方图片提升原型质量；生成或编辑位图素材时，优先使用 `$ui-image-generation`。
+4. **尽早展示关键决策**
+   - 需要用户选择页面结构、交互路径或设计方向时，优先用简短摘要或结构化文字对齐；文字难以表达时再用 ASCII Wireframe/Diagram 或 Mermaid。
+5. **代理负责验收**
+   - 页面就绪后先向用户提供可打开的预览链接，再继续验收。
+   - 明确进入 review 环节时，优先由未参与实现的子代理独立审查，不以实现者自检代替 review。
+
+## 产物与规则
+
+Make 管理端默认使用 `http://localhost:53817/`；`check-app-ready` 返回 `serverUrl` 时以实际值为准。`projectId` 仅表示项目作用域，query 参数需 URL 解码。
+
+| 场景 | 位置 | Make 链接信号 | 参考文档 |
+|------|------|---------------|----------|
+| 原型开发与验收 | `src/prototypes/<prototype-id>/` | `?p=<prototype-id>`；`&spec=1` 对应 `.spec/` | `rules/prototype-development-guide.md` |
+| 创建或修改主题、设计系统、设计规范 | `src/themes/<theme-key>/` | `?theme=<theme-key>` | `$build-design-system 技能` |
+| PRD 文档 | `src/resources/` | `?doc=<resource-path>` | `$plan-prds 技能` / `$write-prd 技能` |
+| 项目资料、文档、普通资源和画布 | `src/resources/` | `?doc=<resource-path>` | `rules/resource-management-guide.md` |
+| 固定文档模板 | `templates/` | 项目设置 | `rules/resource-management-guide.md` |
+| 原型 Review（业务/UI） | 原型 `.spec/reviews/` | 随 `?p=<prototype-id>&spec=1` 定位 | `rules/prototype-review-guide.md` / `rules/ui-review-guide.md` |

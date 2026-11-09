@@ -18,21 +18,35 @@ export const DETERMINISTIC_UPDATED_AT = '2026-05-03T00:00:00.000Z';
 
 export const resourceLayout = {
   prototypes: ['src/prototypes'],
-  docs: ['src/resources'],
   themes: ['src/themes'],
   media: ['src/resources/assets'],
 };
 
 export const resourceWriteTargets = {
   prototypes: { type: 'project-relative-path', path: resourceLayout.prototypes[0] },
-  docs: { type: 'project-relative-path', path: resourceLayout.docs[0] },
   themes: { type: 'project-relative-path', path: resourceLayout.themes[0] },
   media: { type: 'project-relative-path', path: resourceLayout.media[0] },
 };
 
 export const localExportCapabilities = {
-  html: false,
+  html: true,
   make: false,
+};
+
+export const PROTOTYPE_PLACEHOLDER_GUIDE = {
+  kind: 'prototype-empty',
+  title: '这个原型还没有开始创建',
+  description: '告诉 AI 你想做什么：目标用户、使用场景、页面内容和参考风格。',
+  steps: [
+    '在本地 AI 软件中打开本页面',
+    '打开草稿创作原型',
+  ],
+  tips: [
+    '模型不要用 auto，推荐：Claude Opus 4.8、Gemini 3.1 Pro、GPT-5.5、Kimi K2.7、GLM-5.2。',
+    '一个任务开一个新对话，避免多个需求互相干扰。',
+    '多用图片和语音描述，截图、草图和参考页面通常比长文字更清楚。',
+    '如果已有视觉规范，建议先创建设计系统。',
+  ],
 };
 
 // Snapshot from https://getdesign.md/api/cli/downloads?brands=...
@@ -228,6 +242,23 @@ function readDisplayName(indexFilePath, fallback) {
   return displayName || fallback;
 }
 
+function hasGeneratedPlaceholderSource(indexFilePath) {
+  if (!fs.existsSync(indexFilePath)) return false;
+  const source = fs.readFileSync(indexFilePath, 'utf8');
+  const hasGeneratedShell = source.includes('placeholder-empty-page')
+    && source.includes('打开左侧默认引导页继续创建')
+    && source.includes('export default function Placeholder');
+  return hasGeneratedShell && (
+    source.includes('@axhub-placeholder prototype-empty')
+    || source.includes('className="placeholder-empty-page"')
+  );
+}
+
+function isGeneratedEmptyPrototypePlaceholder(prototypeDir, indexFilePath) {
+  void prototypeDir;
+  return hasGeneratedPlaceholderSource(indexFilePath);
+}
+
 function getLiteralPropertyValue(objectLiteral, propertyName) {
   const property = objectLiteral.properties.find((candidate) => (
     ts.isPropertyAssignment(candidate)
@@ -263,8 +294,9 @@ function extractHashRouteFromCall(callExpression) {
     }
     const id = normalizePageId(getLiteralPropertyValue(element, 'id'));
     const title = stringValue(getLiteralPropertyValue(element, 'title'));
+    const group = stringValue(getLiteralPropertyValue(element, 'group'));
     if (id && title) {
-      pages.push({ id, title });
+      pages.push({ id, title, ...(group ? { group } : {}) });
     }
   }
   if (!pages.length) {
@@ -472,6 +504,21 @@ function createResourceClientUrl(clientOrigin, resourceKind, resourceName) {
   return `${normalizedOrigin}${pathname}`;
 }
 
+function findMainPrototypeSpec(prototypeDir) {
+  const specDir = path.join(prototypeDir, '.spec');
+  for (const name of ['spec.html', 'spec.md']) {
+    const specPath = path.join(specDir, name);
+    try {
+      if (fs.statSync(specPath).isFile()) {
+        return specPath;
+      }
+    } catch {
+      // A missing or invalid spec does not make the prototype discoverable.
+    }
+  }
+  return null;
+}
+
 function collectPrototypes(projectRoot, clientOrigin, options = {}) {
   const roots = resourceLayout.prototypes.map((dir) => path.join(projectRoot, dir));
   const runtimeEntryKeys = readRuntimeEntryKeys(projectRoot);
@@ -480,21 +527,29 @@ function collectPrototypes(projectRoot, clientOrigin, options = {}) {
     if (!fs.existsSync(root)) continue;
     for (const entry of fs.readdirSync(root, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
       if (!entry.isDirectory()) continue;
-      const indexFile = path.join(root, entry.name, 'index.tsx');
-      if (!fs.existsSync(indexFile)) continue;
-      const filePath = toPosix(path.relative(projectRoot, indexFile));
-      const route = extractHashRouteMetadata(path.join(root, entry.name));
+      const prototypeDir = path.join(root, entry.name);
+      const indexFile = path.join(prototypeDir, 'index.tsx');
+      const hasIndex = fs.existsSync(indexFile);
+      const specFile = findMainPrototypeSpec(prototypeDir);
+      if (!hasIndex && !specFile) continue;
+      const filePath = hasIndex ? toPosix(path.relative(projectRoot, indexFile)) : '';
+      const specFilePath = specFile ? toPosix(path.relative(projectRoot, specFile)) : '';
+      const route = hasIndex ? extractHashRouteMetadata(prototypeDir) : null;
+      const placeholder = hasIndex ? isGeneratedEmptyPrototypePlaceholder(prototypeDir, indexFile) : false;
       const item = {
         id: entry.name,
         name: entry.name,
-        title: readDisplayName(indexFile, entry.name),
+        title: hasIndex ? readDisplayName(indexFile, entry.name) : entry.name,
         clientUrl: createResourceClientUrl(clientOrigin, 'prototypes', entry.name),
         previewMode: 'clientRuntime',
+        ...(hasIndex ? {} : { previewDisabled: true }),
         description: '',
         updatedAt: DETERMINISTIC_UPDATED_AT,
-        filePath,
-        ...(options.includeAbsoluteFilePaths === false ? {} : { absoluteFilePath: path.resolve(indexFile) }),
+        ...(filePath ? { filePath } : {}),
+        ...(specFilePath ? { specFilePath } : {}),
+        ...(hasIndex && options.includeAbsoluteFilePaths !== false ? { absoluteFilePath: path.resolve(indexFile) } : {}),
         ...(route ? { pages: route.pages, defaultPageId: route.defaultPageId } : {}),
+        ...(placeholder ? { placeholder: true, placeholderGuide: PROTOTYPE_PLACEHOLDER_GUIDE } : {}),
       };
       const artifacts = {
         ...createFigmaArtifactMetadata(projectRoot, entry.name),
@@ -508,32 +563,6 @@ function collectPrototypes(projectRoot, clientOrigin, options = {}) {
     }
   }
   return items.sort(sortById);
-}
-
-function collectDocs(projectRoot, options = {}) {
-  const docs = [];
-  for (const root of resourceLayout.docs.map((dir) => path.resolve(projectRoot, dir))) {
-    for (const filePath of listFiles(root, () => true)) {
-      const relativePath = toPosix(path.relative(root, filePath));
-      if (isIgnoredResourceRelativePath(relativePath)) continue;
-      const isMarkdown = path.extname(filePath).toLowerCase() === '.md';
-      const id = isMarkdown ? relativePath.replace(/\.md$/iu, '') : relativePath;
-      docs.push({
-        id,
-        name: id,
-        title: isMarkdown
-          ? titleFromMarkdown(filePath, path.basename(filePath, '.md'))
-          : relativePath.replace(/\.[^.]+$/u, ''),
-        path: options.includeAbsoluteFilePaths === false
-          ? toPosix(path.relative(projectRoot, filePath))
-          : path.resolve(filePath),
-        description: '',
-        updatedAt: DETERMINISTIC_UPDATED_AT,
-      });
-    }
-  }
-
-  return docs.sort(sortById);
 }
 
 function collectThemes(projectRoot, clientOrigin) {
@@ -576,7 +605,6 @@ export function buildMakeProjectMetadata(projectRoot, options = {}) {
   const clientOrigin = String(options.clientOrigin ?? DEFAULT_CLIENT_ORIGIN).replace(/\/+$/u, '');
   const projectIdentity = readMakeClientProjectIdentity(projectRoot);
   const prototypes = collectPrototypes(projectRoot, clientOrigin, options);
-  const docs = collectDocs(projectRoot, options);
   const themes = collectThemes(projectRoot, clientOrigin);
 
   return {
@@ -587,12 +615,10 @@ export function buildMakeProjectMetadata(projectRoot, options = {}) {
     },
     resources: {
       prototypes,
-      docs,
       themes,
     },
     navigation: {
       prototypes: prototypes.map((item) => item.id),
-      docs: docs.map((item) => item.id),
     },
     orders: {
       themes: themes.map((item) => item.id),

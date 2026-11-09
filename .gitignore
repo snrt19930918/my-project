@@ -22,6 +22,9 @@ vite.config.*.timestamp-*
 
 # Environment variables
 .env
+.env.*
+!.env.example
+!.env.*.example
 .env.local
 .env.*.local
 .env.production
@@ -30,11 +33,17 @@ vite.config.*.timestamp-*
 # Local configuration (runtime-generated)
 .axhub/make/*
 !.axhub/make/client.json
+!.axhub/make/axhub.config.json
 !.axhub/make/README.md
 !.axhub/make/sidebar-tree.json
+.axhub/make/review-reports.json
+.axhub/sessions/
 components.json
 .dev-server-info.json
 entries.json
+
+# Design knowledge indexes are large generated caches
+design-knowledge/indexes/
 
 # IDE and editors
 .idea/
@@ -42,7 +51,11 @@ entries.json
 .claude/*
 !.claude/skills/
 !.claude/skills/**
+.agents/*
+!.agents/skills/
+!.agents/skills/**
 .opencode/
+.codegraph/
 .trae/
 /.drafts/
 *.swp
@@ -64,12 +77,20 @@ Desktop.ini
 
 # Logs
 logs/
+.logs/
 *.log
+*.pid
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+.drawio-tmp/
+
+# Runtime review/comment artifacts are project-local by default.
+src/prototypes/**/.spec/acp/
+src/prototypes/**/.spec/prototype-comments.json
+src/prototypes/**/.spec/reviews/config.json
 
 # Coverage reports
 coverage/
@@ -127,3 +148,7 @@ temp/
 # Database files (keep directory structure and initial data)
 # assets/database/*.json
 # !assets/database/.gitkeep
+!.axhub/make/comments/
+!.axhub/make/comments/**
+!.axhub/make/comment-assets/
+!.axhub/make/comment-assets/**

@@ -8,6 +8,8 @@
   - Make client 项目身份唯一来源。
   - `project.id` 是项目 id。
   - `project.name` 是项目名；空字符串表示未命名，管理端显示为「未命名项目」。
+- `axhub.config.json`
+  - Make 项目配置文件，提供协作方添加项目时需要的默认配置。
 
 ## 派生缓存
 
@@ -36,4 +38,8 @@
 
 ## 模板提交边界
 
-官方 client 模板只提交 `client.json`、本 README 和 `sidebar-tree.json`。其它运行缓存、记录和产物应保持本地忽略。
+官方 client 模板只提交 `client.json`、`axhub.config.json`、本 README 和 `sidebar-tree.json`。其它运行缓存、记录和产物应保持本地忽略。
+
+## 共享批注存储
+
+`.axhub/make/comments/` 和 `.axhub/make/comment-assets/` 保存原型、Markdown、HTML 及原型规格文档的共享本地 Commentary 批注。用户项目可将这两个目录纳入 Git；发布模板不会携带当前项目的实际批注数据。

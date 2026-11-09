@@ -1,24 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-09T02:44:42.998Z",
+  "updatedAt": "2026-10-26T09:45:48.670Z",
   "prototypes": [
     {
-      "id": "item-prototypes-express-courier",
+      "id": "item-prototypes-fitout-admin",
       "kind": "item",
-      "title": "express courier",
-      "itemKey": "prototypes/express-courier"
+      "title": "fitout admin",
+      "itemKey": "prototypes/fitout-admin"
     },
     {
-      "id": "item:prototypes:beginner-guide",
+      "id": "item:prototypes:fitout-process",
       "kind": "item",
-      "title": "新手指导",
-      "itemKey": "prototypes/beginner-guide"
-    },
-    {
-      "id": "item:prototypes:annotation-demo",
-      "kind": "item",
-      "title": "标注演示",
-      "itemKey": "prototypes/annotation-demo"
+      "title": "二装施工过程管理",
+      "itemKey": "prototypes/fitout-process"
     }
   ],
   "docs": [],

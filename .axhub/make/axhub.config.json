@@ -1,0 +1,38 @@
+{
+  "server": {
+    "host": "localhost",
+    "lanHost": "192.168.9.120",
+    "skipLanPreviewAuth": true,
+    "enableCommandAPI": false
+  },
+  "projectDefaults": {
+    "defaultTheme": null
+  },
+  "projectInfo": {
+    "description": null
+  },
+  "cloudPublishing": {
+    "vercel": {
+      "token": "",
+      "projectName": "",
+      "teamId": ""
+    },
+    "cloudflarePages": {
+      "apiToken": "",
+      "accountId": "",
+      "projectName": "",
+      "productionBranch": "main"
+    },
+    "githubPages": {
+      "repository": "",
+      "branch": "gh-pages",
+      "sourceDirectory": "/"
+    },
+    "publishSettings": {
+      "includeSource": false,
+      "visibleTargets": [
+        "axhub"
+      ]
+    }
+  }
+}

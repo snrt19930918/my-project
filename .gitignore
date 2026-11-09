@@ -42,8 +42,11 @@ components.json
 .dev-server-info.json
 entries.json
 
-# Design knowledge indexes are large generated caches
+# Design knowledge assets and third-party rule bundles are kept outside version control
+design-knowledge/manifest.json
+design-knowledge/design-md/
 design-knowledge/indexes/
+rules/references/impeccable/
 
 # IDE and editors
 .idea/
